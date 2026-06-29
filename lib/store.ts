@@ -6,6 +6,7 @@ type TravelItem = {
   detail: string;
   meta: string;
   accent: string;
+  duration?: number;
 };
 
 type TravelState = {
@@ -25,13 +26,15 @@ const initialPool: TravelItem[] = [
     detail: "Arrive before 7:00 for the best city views without the crowd.",
     meta: "Morning",
     accent: "#6366f1",
+    duration: 120, // 2 hours
   },
-  {
+ {
     id: "2",
     title: "Hanok district walk",
     detail: "Pause at a tea house and collect local texture.",
     meta: "Culture",
     accent: "#0f172a",
+    duration: 90, // 1.5 hours
   },
   {
     id: "3",
@@ -39,6 +42,7 @@ const initialPool: TravelItem[] = [
     detail: "Keep the evening light and warm with a small circuit.",
     meta: "Night",
     accent: "#475569",
+    duration: 60, // 1 hour
   },
 ];
 
@@ -73,41 +77,31 @@ addIdea: (idea) =>
         Object.entries(state.schedule).map(([slotKey, item]) => [slotKey, item?.id === id ? null : item]),
       ),
     })),
-  moveItem: (id, destination, slotKey) =>
-    set((state) => {
-      const item = state.pool.find((entry) => entry.id === id) ?? Object.values(state.schedule).find((entry) => entry?.id === id);
-      if (!item) return state;
+// Update your moveItem in lib/store.ts
+moveItem: (id: string, targetZone: "pool" | "schedule", slotKey?: string, duration?: number) => set((state: any) => {
+  const item = state.pool.find((i: any) => i.id === id) || 
+               Object.values(state.schedule).find((i: any) => i?.id === id);
+  
+  if (!item) return state;
 
-      const nextPool = state.pool.filter((entry) => entry.id !== id);
-      const nextSchedule = { ...state.schedule };
+  // If duration is provided (initial drop), update the item's duration
+  const updatedItem = duration ? { ...item, duration } : item;
 
-      for (const [key, entry] of Object.entries(nextSchedule)) {
-        if (entry?.id === id) {
-          nextSchedule[key] = null;
-        }
-      }
+  const newPool = state.pool.filter((i: any) => i.id !== id);
+  const newSchedule = { ...state.schedule };
+  
+  // Scrub ghost
+  for (const key in newSchedule) {
+    if (newSchedule[key]?.id === id) delete newSchedule[key];
+  }
 
-      if (destination === "pool") {
-        return { ...state, pool: [...nextPool, item], schedule: nextSchedule };
-      }
-
-      if (!slotKey) {
-        return state;
-      }
-
-      const existing = nextSchedule[slotKey];
-      if (existing) {
-        nextSchedule[slotKey] = item;
-        return {
-          ...state,
-          pool: [...nextPool, existing],
-          schedule: nextSchedule,
-        };
-      }
-
-      nextSchedule[slotKey] = item;
-      return { ...state, pool: nextPool, schedule: nextSchedule };
-    }),
+  if (targetZone === "pool") {
+    return { pool: [...newPool, updatedItem], schedule: newSchedule };
+  } else if (targetZone === "schedule" && slotKey) {
+    return { pool: newPool, schedule: { ...newSchedule, [slotKey]: updatedItem } };
+  }
+  return state;
+}),
   clearSlot: (slotKey) =>
     set((state) => {
       const item = state.schedule[slotKey];
