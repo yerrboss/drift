@@ -637,6 +637,10 @@ video {
   height: 100%;
 }
 
+.h-4{
+  height: 1rem;
+}
+
 .min-h-\[112px\]{
   min-height: 112px;
 }
@@ -669,6 +673,10 @@ video {
   width: 100%;
 }
 
+.w-4{
+  width: 1rem;
+}
+
 .min-w-\[120px\]{
   min-width: 120px;
 }
@@ -689,8 +697,16 @@ video {
   cursor: pointer;
 }
 
+.resize{
+  resize: both;
+}
+
 .grid-cols-\[90px_repeat\(7\2c minmax\(0\2c 1fr\)\)\]{
   grid-template-columns: 90px repeat(7,minmax(0,1fr));
+}
+
+.grid-cols-2{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .flex-col{
@@ -761,6 +777,10 @@ video {
   border-radius: 0.75rem;
 }
 
+.rounded{
+  border-radius: 0.25rem;
+}
+
 .border{
   border-width: 1px;
 }
@@ -782,6 +802,16 @@ video {
 .border-slate-200{
   --tw-border-opacity: 1;
   border-color: rgb(226 232 240 / var(--tw-border-opacity, 1));
+}
+
+.border-rose-200{
+  --tw-border-opacity: 1;
+  border-color: rgb(254 205 211 / var(--tw-border-opacity, 1));
+}
+
+.border-slate-300{
+  --tw-border-opacity: 1;
+  border-color: rgb(203 213 225 / var(--tw-border-opacity, 1));
 }
 
 .bg-indigo-100{
@@ -858,6 +888,15 @@ video {
   background-color: rgb(255 255 255 / 0.8);
 }
 
+.bg-indigo-100\/70{
+  background-color: rgb(224 231 255 / 0.7);
+}
+
+.bg-slate-100{
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
+}
+
 .p-2{
   padding: 0.5rem;
 }
@@ -910,6 +949,26 @@ video {
   padding-bottom: 1.25rem;
 }
 
+.px-2\.5{
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}
+
+.px-6{
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.px-8{
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.py-10{
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+
 .pt-4{
   padding-top: 1rem;
 }
@@ -949,6 +1008,11 @@ video {
 .text-xs{
   font-size: 0.75rem;
   line-height: 1rem;
+}
+
+.text-2xl{
+  font-size: 1.5rem;
+  line-height: 2rem;
 }
 
 .font-medium{
@@ -1185,6 +1249,10 @@ body{
 }
 
 @media (min-width: 1024px){
+  .lg\:grid-cols-2{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .lg\:flex-row{
     flex-direction: row;
   }
@@ -1215,5 +1283,11 @@ body{
 @media (min-width: 1280px){
   .xl\:grid-cols-\[300px_minmax\(0\2c 1fr\)\]{
     grid-template-columns: 300px minmax(0,1fr);
+  }
+}
+
+@media (min-width: 1536px){
+  .\32xl\:grid-cols-4{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

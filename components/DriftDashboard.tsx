@@ -4,6 +4,28 @@ import { motion } from "framer-motion";
 import { ScheduleCanvas } from "@/components/ScheduleCanvas";
 
 export function DriftDashboard() {
+  const handleShare = async () => {
+  const shareData = {
+    title: "My Drift Itinerary",
+    text: "Check out my travel plans on Drift!",
+    url: window.location.href, // Grabs the current URL
+  };
+
+  try {
+    // 1. Try the native Web Share API first
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } 
+    // 2. Fallback: Copy to clipboard if the Share API isn't supported
+    else {
+      await navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!"); 
+    }
+  } catch (error) {
+    // The user closed the share menu without sharing, which is normal
+    console.log("Share cancelled or failed", error);
+  }
+};
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-4 text-slate-800 sm:px-6 lg:px-8 lg:py-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-4">
@@ -16,7 +38,7 @@ export function DriftDashboard() {
                 <span className="block text-slate-500">made calm and clear.</span>
               </h1>
             </div>
-            <motion.button
+            <motion.button onClick={handleShare}
               whileTap={{ scale: 0.97 }}
               className="rounded-full border border-slate-200 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               aria-label="Share itinerary"

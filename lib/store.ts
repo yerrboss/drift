@@ -45,16 +45,20 @@ const initialPool: TravelItem[] = [
 export const useTravelStore = create<TravelState>((set) => ({
   pool: initialPool,
   schedule: {},
-  addIdea: (idea) =>
-    set((state) => ({
-      pool: [
+// Replace your existing addIdea function with this:
+addIdea: (idea) =>
+    set((state) => {
+      console.log("5. Zustand received idea!", idea);
+      console.log("6. Previous pool size:", state.pool.length);
+      
+      const newPool = [
         ...state.pool,
-        {
-          ...idea,
-          id: `${Date.now()}`,
-        },
-      ],
-    })),
+        { ...idea, id: crypto.randomUUID() },
+      ];
+      
+      console.log("7. New pool size will be:", newPool.length);
+      return { pool: newPool };
+    }),
   updateIdea: (id, updates) =>
     set((state) => ({
       pool: state.pool.map((item) => (item.id === id ? { ...item, ...updates } : item)),

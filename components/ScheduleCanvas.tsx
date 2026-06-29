@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
+// Change closestCenter to rectIntersection
+import { DndContext, rectIntersection, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { motion } from "framer-motion";
 import { useTravelStore } from "@/lib/store";
 import { IdeaCard } from "@/components/IdeaCard";
@@ -10,7 +11,8 @@ import { CheatSheet } from "@/components/CheatSheet";
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const times = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"];
 
-function ScheduleSlot({ slotKey, item, onClear, onDelete }: { slotKey: string; item: any; onClear: (slotKey: string) => void; onDelete: (slotKey: string) => void }) {
+// 1. Update the props definition here
+function ScheduleSlot({ slotKey, item, onEdit, onDelete, onReturnToPool }: { slotKey: string; item: any; onEdit: (item: any) => void; onDelete: (slotKey: string) => void; onReturnToPool: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({
     id: slotKey,
     data: { type: "slot", slotKey },
@@ -88,13 +90,27 @@ function ScheduleSlot({ slotKey, item, onClear, onDelete }: { slotKey: string; i
               <button
                 type="button"
                 onClick={() => {
-                  onClear(slotKey);
+                  // 2. Fixed this to call onEdit, not onClear
+                  onEdit(item); 
                   closeMenu();
                 }}
                 className="mb-1 block w-full rounded-lg px-2 py-1 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
               >
-                Clear
+                Edit
               </button>
+              
+              {/* 3. NEW BUTTON: Return to pool */}
+              <button
+                type="button"
+                onClick={() => {
+                  onReturnToPool(item.id);
+                  closeMenu();
+                }}
+                className="mb-1 block w-full rounded-lg px-2 py-1 text-left text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Return to pool
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -140,28 +156,39 @@ export function ScheduleCanvas() {
     setActiveId(event.active.id as string);
   };
 
+// Inside ScheduleCanvas.tsx, check this call:
+const commitIdea = (event?: React.FormEvent | React.MouseEvent) => {
+  event?.preventDefault();
+  console.log("1. Button clicked! Current draft state:", draft);
+
+  const title = draft.title?.trim();
+  if (!title) {
+    console.error("2. FAILED: Title is empty, aborting.");
+    return;
+  }
+
+  const payload = {
+    title,
+    detail: draft.detail?.trim() || "",
+    meta: draft.meta?.trim() || "Idea",
+    accent: draft.accent || "#6366f1",
+  };
+
+  console.log("3. Payload prepared:", payload);
+
+  if (editingId) {
+    updateIdea(editingId, payload);
+    setEditingId(null);
+  } else {
+    console.log("4. Sending to Zustand addIdea...");
+    addIdea(payload);
+  }
+
+  setDraft({ title: "", detail: "", meta: "Idea", accent: "#6366f1" });
+};
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!draft.title.trim()) return;
-
-    if (editingId) {
-      updateIdea(editingId, {
-        title: draft.title.trim(),
-        detail: draft.detail.trim(),
-        meta: draft.meta.trim() || "Idea",
-        accent: draft.accent,
-      });
-      setEditingId(null);
-    } else {
-      addIdea({
-        title: draft.title.trim(),
-        detail: draft.detail.trim(),
-        meta: draft.meta.trim() || "Idea",
-        accent: draft.accent,
-      });
-    }
-
-    setDraft({ title: "", detail: "", meta: "Idea", accent: "#6366f1" });
+    commitIdea();
   };
 
   const startEditing = (item: { id: string; title: string; detail: string; meta: string; accent: string }) => {
@@ -200,11 +227,17 @@ export function ScheduleCanvas() {
     };
   }, [menuItemId]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
 
-    if (!over) return;
+    // DEBUG LOG: See exactly where the item was dropped
+    console.log("Dropped! Over:", over?.id, "Data:", over?.data.current);
+
+    if (!over) {
+      console.log("Missed all drop zones!");
+      return;
+    }
 
     const draggedId = active.id as string;
     const overType = over.data.current?.type;
@@ -232,9 +265,10 @@ export function ScheduleCanvas() {
       </div>
 
       <DndContext
+      id="dnd-context-drift" //
         sensors={sensors}
         // closestCenter keeps the active card aligned to the nearest drop zone for better accuracy on dense weekly cells.
-        collisionDetection={closestCenter}
+       collisionDetection={rectIntersection} //
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -276,15 +310,17 @@ export function ScheduleCanvas() {
                 />
               </div>
               <button
-                type="submit"
+                type="button"
+                onClick={() => commitIdea()}
                 className="rounded-full bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 {editingId ? "Save idea" : "Add idea"}
               </button>
             </form>
             <div
-              ref={poolRef}
-              className={`min-h-[220px] rounded-2xl border border-dashed p-3 transition ${poolIsOver ? "border-indigo-400 bg-indigo-100" : "border-slate-200 bg-white/70"}`}
+          ref={poolRef}
+  // Make sure this div has layout bounds that dnd-kit can measure reliably
+  className={`relative min-h-[400px] w-full rounded-2xl border border-dashed p-3 transition ${poolIsOver ? "border-indigo-400 bg-indigo-100" : "border-slate-200 bg-white/70"}`}
             >
               <div className="space-y-3">
                 {pool.map((item) => (
@@ -352,7 +388,16 @@ export function ScheduleCanvas() {
                     {days.map((day) => {
                       const slotKey = `${day}-${time}`;
                       const item = schedule[slotKey];
-                      return <ScheduleSlot key={slotKey} slotKey={slotKey} item={item} onClear={clearSlot} onDelete={clearSlot} />;
+                      return (
+  <ScheduleSlot 
+    key={slotKey} 
+    slotKey={slotKey} 
+    item={item} 
+    onEdit={startEditing} // Pass your startEditing function here
+    onDelete={clearSlot} 
+    onReturnToPool={(id) => moveItem(id, "pool")} //
+  />
+);
                     })}
                   </Fragment>
                 ))}
