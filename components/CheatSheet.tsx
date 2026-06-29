@@ -92,7 +92,7 @@ const guideData = [
 
 function AccordionItem({ item, isOpen, onClick }: { item: any; isOpen: boolean; onClick: () => void }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors hover:border-indigo-200">
+    <div className="break-inside-avoid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors hover:border-indigo-200">
       <button
         onClick={onClick}
         className="flex w-full items-center justify-between bg-white px-5 py-4 text-left focus:outline-none"
@@ -144,7 +144,11 @@ function AccordionItem({ item, isOpen, onClick }: { item: any; isOpen: boolean; 
 }
 
 export function CheatSheet() {
-  const [openId, setOpenId] = useState<string | null>("apps"); // Default opens the first one
+  const [openId, setOpenId] = useState<string | null>("apps");
+
+  // 1. Split the data into two permanent columns
+  const leftColumn = guideData.filter((_, index) => index % 2 === 0);
+  const rightColumn = guideData.filter((_, index) => index % 2 !== 0);
 
   return (
     <section className="mt-8 rounded-[28px] border border-slate-200 bg-slate-50 p-4 sm:p-6 lg:p-7">
@@ -154,15 +158,33 @@ export function CheatSheet() {
         <p className="mt-2 text-sm text-slate-500">Everything you need to know before touching down at Incheon.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-        {guideData.map((item) => (
-          <AccordionItem
-            key={item.id}
-            item={item}
-            isOpen={openId === item.id}
-            onClick={() => setOpenId(openId === item.id ? null : item.id)}
-          />
-        ))}
+      {/* 2. Use a standard grid with items-start to prevent stretching */}
+      <div className="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        
+        {/* Left Column Container */}
+        <div className="flex flex-col gap-4">
+          {leftColumn.map((item) => (
+            <AccordionItem
+              key={item.id}
+              item={item}
+              isOpen={openId === item.id}
+              onClick={() => setOpenId(openId === item.id ? null : item.id)}
+            />
+          ))}
+        </div>
+
+        {/* Right Column Container */}
+        <div className="flex flex-col gap-4">
+          {rightColumn.map((item) => (
+            <AccordionItem
+              key={item.id}
+              item={item}
+              isOpen={openId === item.id}
+              onClick={() => setOpenId(openId === item.id ? null : item.id)}
+            />
+          ))}
+        </div>
+
       </div>
     </section>
   );
